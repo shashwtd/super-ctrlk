@@ -1,65 +1,129 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useRef } from 'react';
+import Image from 'next/image';
+import CommandPalette from '@/components/CommandPalette';
 
 export default function Home() {
+  const [isMac] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    }
+    return false;
+  });
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    setMousePosition({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
+    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden" style={{ background: '#080808' }}>
+      <CommandPalette isOpen={isOpen} setIsOpen={setIsOpen} />
+      
+      {/* Background image */}
+      <div className="absolute inset-0">
+        <Image 
+          src="/bg.jpg" 
+          alt="" 
+          fill
+          className="object-cover opacity-30"
           priority
+          unoptimized
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+      </div>
+      
+      {/* Grid lines */}
+      <div className="absolute inset-0 opacity-5 mix-blend-difference">
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px)',
+          backgroundSize: '80px 80px'
+        }} />
+      </div>
+      
+      {/* Grain texture */}
+      <div className="absolute inset-0 opacity-10" style={{
+        backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 400 400\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'2\' numOctaves=\'1\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")',
+      }} />
+      
+      {/* Top bar */}
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-8 py-6 z-20">
+        <div className="text-xs uppercase tracking-widest font-mono" style={{ color: '#aaa' }}>
+          Kairos
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="flex items-center gap-2 text-xs font-mono" style={{ color: '#666' }}>
+          <span>Press</span>
+          <kbd className="px-2 py-1 bg-black/40 border border-white/10 rounded" style={{ color: '#aaa' }}>
+            {isMac ? '⌘' : 'Ctrl'}
+          </kbd>
+          <kbd className="px-2 py-1 bg-black/40 border border-white/10 rounded" style={{ color: '#aaa' }}>
+            K
+          </kbd>
         </div>
+      </div>
+      
+      {/* Center content */}
+      <main className="relative z-10 flex flex-col items-center justify-center w-full max-w-2xl px-6">
+        <div className="mb-8 text-center">
+          <div className="text-4xl mb-3 font-sans font-medium tracking-tight" style={{ color: '#ddd', fontFamily: 'var(--font-geist-sans)' }}>
+            Show it once. Automate it forever.
+          </div>
+          <div className="text-base" style={{ color: '#777', fontFamily: 'var(--font-geist-sans)' }}>
+            Type a command or search to get started
+          </div>
+        </div>
+
+        <button
+          ref={buttonRef}
+          onClick={() => setIsOpen(true)}
+          onMouseMove={handleMouseMove}
+          className="group relative w-full focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:ring-offset-4 focus:ring-offset-transparent rounded-2xl transition-all"
+        >
+          
+          {/* Subtle gradient border effect that follows mouse */}
+          <div 
+            className="absolute -inset-px rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+            style={{
+              background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(255,255,255,0.1), transparent 40%)`,
+            }}
+          />
+          
+          <div className="relative bg-black/70 backdrop-blur-2xl rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-4 px-6 py-5">
+              <svg className="w-5 h-5 shrink-0" style={{ color: '#888' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" strokeWidth="2"/>
+                <path d="m21 21-4.35-4.35" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              <div className="flex-1 text-left text-base" style={{ color: '#888', fontFamily: 'var(--font-geist-sans)' }}>
+                Type a command or search...
+              </div>
+              <div className="flex items-center gap-2">
+                <kbd className="px-2.5 py-1.5 bg-white/5 border border-white/10 rounded-md text-xs font-mono" style={{ color: '#aaa' }}>
+                  {isMac ? '⌘' : 'Ctrl'}
+                </kbd>
+                <kbd className="px-2.5 py-1.5 bg-white/5 border border-white/10 rounded-md text-xs font-mono" style={{ color: '#aaa' }}>
+                  K
+                </kbd>
+              </div>
+            </div>
+          </div>
+        </button>
       </main>
+      
+      {/* Bottom hint */}
+      <div className="absolute bottom-8 left-0 right-0 flex justify-center z-20">
+        <div className="text-xs font-mono" style={{ color: '#444' }}>
+          Keyboard shortcuts • Quick actions • Instant automation
+        </div>
+      </div>
     </div>
   );
 }

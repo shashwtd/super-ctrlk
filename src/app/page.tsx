@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
-import CommandPalette from '@/components/CommandPalette';
+import CommandPalette from '@/components/CommandPalette/CommandPalette';
 
 export default function Home() {
   const [isMac] = useState(() => {

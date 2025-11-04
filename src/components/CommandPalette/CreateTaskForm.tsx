@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Layers, Settings, FileText, Link2, X, Check, Upload, Plus, Play, Clock } from 'lucide-react';
 import Image from 'next/image';
 import { AVAILABLE_APPS } from '@/lib/apps';
-import Spinner from './Spinner';
+import Spinner from '../Spinner';
 
 type Tab = 'basic' | 'inputs' | 'files' | 'apps';
 type TriggerType = 'manual' | 'automatic';

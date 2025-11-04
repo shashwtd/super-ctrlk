@@ -5,7 +5,7 @@ import { ArrowLeft, Play, Trash2, Settings, FileText, Link2, Clock } from 'lucid
 import { Task } from '@/lib/types';
 import Image from 'next/image';
 import { getAppById, getAppLogo } from '@/lib/apps';
-import Spinner from './Spinner';
+import Spinner from '../Spinner';
 
 interface TaskDetailViewProps {
   task: Task;

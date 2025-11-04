@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Layers, Settings, FileText, Link2, X, Check, Upload, Plus, Play, Clock } from 'lucide-react';
 import Image from 'next/image';
+import { AVAILABLE_APPS } from '@/lib/apps';
+import Spinner from './Spinner';
 
 type Tab = 'basic' | 'inputs' | 'files' | 'apps';
 type TriggerType = 'manual' | 'automatic';
@@ -19,26 +21,10 @@ interface CreateTaskFormProps {
     apps: string[];
   }) => void;
   prefilledTitle?: string;
+  isLoading?: boolean;
 }
 
-interface App {
-  id: string;
-  name: string;
-  logo: string;
-}
-
-const availableApps: App[] = [
-  { id: 'gmail', name: 'Gmail', logo: '/logos/gmail-svgrepo-com.svg' },
-  { id: 'slack', name: 'Slack', logo: '/logos/slack-svgrepo-com.svg' },
-  { id: 'notion', name: 'Notion', logo: '/logos/notion-svgrepo-com.svg' },
-  { id: 'trello', name: 'Trello', logo: '/logos/trello-svgrepo-com.svg' },
-  { id: 'github', name: 'GitHub', logo: '/logos/github-svgrepo-com.svg' },
-  { id: 'drive', name: 'Google Drive', logo: '/logos/google-drive-svgrepo-com.svg' },
-  { id: 'calendar', name: 'Google Calendar', logo: '/logos/g-calendar-svgrepo-com.svg' },
-  { id: 'sheets', name: 'Google Sheets', logo: '/logos/sheets-sheet-svgrepo-com.svg' }
-];
-
-export default function CreateTaskForm({ onBack, onSubmit, prefilledTitle = '' }: CreateTaskFormProps) {
+export default function CreateTaskForm({ onBack, onSubmit, prefilledTitle, isLoading = false }: CreateTaskFormProps) {
   const [currentTab, setCurrentTab] = useState<Tab>('basic');
   const [taskName, setTaskName] = useState(prefilledTitle);
   const [taskDescription, setTaskDescription] = useState('');
@@ -50,14 +36,14 @@ export default function CreateTaskForm({ onBack, onSubmit, prefilledTitle = '' }
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [appSearchQuery, setAppSearchQuery] = useState('');
 
-  const filteredApps = availableApps.filter(app => 
+  const filteredApps = AVAILABLE_APPS.filter(app => 
     app.name.toLowerCase().includes(appSearchQuery.toLowerCase())
   );
 
   const handleCreate = () => {
-    if (!taskName.trim() || !taskDescription.trim()) return;
+    if (!taskName?.trim()) return;
     onSubmit({
-      title: taskName.trim(),
+      title: taskName?.trim() || '',
       description: taskDescription.trim(),
       triggerType,
       inputs: taskInputs,
@@ -72,7 +58,7 @@ export default function CreateTaskForm({ onBack, onSubmit, prefilledTitle = '' }
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
-      transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       className="bg-[#111] backdrop-blur-2xl border border-white/8 rounded-xl overflow-hidden"
       style={{
         fontFamily: 'var(--font-geist-sans)',
@@ -509,17 +495,19 @@ export default function CreateTaskForm({ onBack, onSubmit, prefilledTitle = '' }
           </button>
           <button
             onClick={handleCreate}
-            disabled={!taskName.trim()}
-            className="px-5 py-2 rounded-lg text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            disabled={!taskName?.trim() || isLoading}
+            className="px-5 py-2 rounded-lg text-xs font-medium transition-all disabled:cursor-not-allowed cursor-pointer flex items-center gap-2"
             style={{ 
-              background: taskName.trim() ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.04)',
-              color: taskName.trim() ? '#ffffff' : '#666',
-              boxShadow: taskName.trim() 
+              background: taskName?.trim() && !isLoading ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+              color: taskName?.trim() && !isLoading ? '#ffffff' : '#666',
+              opacity: isLoading ? 0.6 : 1,
+              boxShadow: taskName?.trim() && !isLoading
                 ? 'inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 1px 2px rgba(0, 0, 0, 0.3)'
                 : 'inset 0 1px 0 rgba(255, 255, 255, 0.03)'
             }}
           >
-            Create Task
+            {isLoading && <Spinner size={12} />}
+            {isLoading ? 'Creating...' : 'Create Task'}
           </button>
         </div>
       </div>

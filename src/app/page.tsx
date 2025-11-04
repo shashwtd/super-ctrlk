@@ -85,7 +85,7 @@ export default function Home() {
           ref={buttonRef}
           onClick={() => setIsOpen(true)}
           onMouseMove={handleMouseMove}
-          className="group relative w-full focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:ring-offset-4 focus:ring-offset-transparent rounded-2xl transition-all"
+          className="group relative w-full focus:outline-none focus:ring-2 focus:ring-neutral-800 focus:ring-offset-4 focus:ring-offset-transparent rounded-2xl transition-all"
         >
           
           {/* Subtle gradient border effect that follows mouse */}
@@ -118,10 +118,22 @@ export default function Home() {
         </button>
       </main>
       
-      {/* Bottom hint */}
       <div className="absolute bottom-8 left-0 right-0 flex justify-center z-20">
-        <div className="text-xs font-mono" style={{ color: '#444' }}>
-          Keyboard shortcuts • Quick actions • Instant automation
+        <div className="flex items-center gap-3 text-xs font-mono" style={{ color: '#555' }}>
+          <span className="flex items-center gap-1.5">
+            <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-xs" style={{ color: '#777' }}>↑↓</kbd>
+            Navigate
+          </span>
+          <span style={{ color: '#333' }}>•</span>
+          <span className="flex items-center gap-1.5">
+            <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-xs" style={{ color: '#777' }}>↵</kbd>
+            Select
+          </span>
+          <span style={{ color: '#333' }}>•</span>
+          <span className="flex items-center gap-1.5">
+            <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-xs" style={{ color: '#777' }}>ESC</kbd>
+            Close
+          </span>
         </div>
       </div>
     </div>

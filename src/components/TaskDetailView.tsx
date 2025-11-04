@@ -4,19 +4,25 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Play, Trash2, Settings, FileText, Link2, Clock } from 'lucide-react';
 import { Task } from '@/lib/types';
 import Image from 'next/image';
+import { getAppById, getAppLogo } from '@/lib/apps';
+import Spinner from './Spinner';
 
 interface TaskDetailViewProps {
   task: Task;
   onBack: () => void;
   onDelete: (id: string) => void;
   onRun: (id: string) => void;
+  isDeleting?: boolean;
+  isRunning?: boolean;
 }
 
 export default function TaskDetailView({ 
   task, 
   onBack, 
   onDelete, 
-  onRun 
+  onRun,
+  isDeleting = false,
+  isRunning = false
 }: TaskDetailViewProps) {
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -29,34 +35,12 @@ export default function TaskDetailView({
     });
   };
 
-  const appLogos: { [key: string]: string } = {
-    gmail: '/logos/gmail-svgrepo-com.svg',
-    slack: '/logos/slack-svgrepo-com.svg',
-    notion: '/logos/notion-svgrepo-com.svg',
-    trello: '/logos/trello-svgrepo-com.svg',
-    github: '/logos/github-svgrepo-com.svg',
-    drive: '/logos/google-drive-svgrepo-com.svg',
-    calendar: '/logos/g-calendar-svgrepo-com.svg',
-    sheets: '/logos/sheets-sheet-svgrepo-com.svg'
-  };
-
-  const appNames: { [key: string]: string } = {
-    gmail: 'Gmail',
-    slack: 'Slack',
-    notion: 'Notion',
-    trello: 'Trello',
-    github: 'GitHub',
-    drive: 'Google Drive',
-    calendar: 'Google Calendar',
-    sheets: 'Google Sheets'
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
-      transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       className="bg-[#111] backdrop-blur-2xl border border-white/8 rounded-xl overflow-hidden"
       style={{
         fontFamily: 'var(--font-geist-sans)',
@@ -181,21 +165,25 @@ export default function TaskDetailView({
                 </label>
               </div>
               <div className="space-y-2">
-                {task.apps.map((appId) => (
-                  <div 
-                    key={appId}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg"
-                    style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.06)' }}
-                  >
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center p-1.5" style={{
-                      background: '#ffffff',
-                      boxShadow: 'inset 0 1px 0 rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1)'
-                    }}>
-                      <Image src={appLogos[appId]} unoptimized alt={appNames[appId]} width={16} height={16} className="w-full h-full object-contain" />
+                {task.apps.map((appId) => {
+                  const app = getAppById(appId);
+                  const logo = getAppLogo(appId);
+                  return (
+                    <div 
+                      key={appId}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg"
+                      style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.06)' }}
+                    >
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center p-1.5" style={{
+                        background: '#ffffff',
+                        boxShadow: 'inset 0 1px 0 rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1)'
+                      }}>
+                        <Image src={logo} unoptimized alt={app?.name || appId} width={16} height={16} className="w-full h-full object-contain" />
+                      </div>
+                      <span className="text-xs" style={{ color: '#e0e0e0' }}>{app?.name || appId}</span>
                     </div>
-                    <span className="text-xs" style={{ color: '#e0e0e0' }}>{appNames[appId]}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -232,20 +220,26 @@ export default function TaskDetailView({
         <div className="flex items-center gap-2 p-4 border-t border-white/6" style={{ background: 'rgba(255, 255, 255, 0.01)' }}>
           <button
             onClick={() => onRun(task.id)}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer"
+            disabled={isRunning}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer disabled:cursor-not-allowed"
             style={{
               background: 'rgba(255, 255, 255, 0.1)',
               color: '#e0e0e0',
+              opacity: isRunning ? 0.6 : 1,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.14)';
+              if (!isRunning) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.14)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              if (!isRunning) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
             }}
           >
-            <Play className="w-3.5 h-3.5" strokeWidth={2} fill="#e0e0e0" />
-            Run Task
+            {isRunning ? (
+              <Spinner size={14} />
+            ) : (
+              <Play className="w-3.5 h-3.5" strokeWidth={2} fill="#e0e0e0" />
+            )}
+            {isRunning ? 'Running...' : 'Run Task'}
           </button>
 
           <button
@@ -269,21 +263,27 @@ export default function TaskDetailView({
 
           <button
             onClick={() => onDelete(task.id)}
-            className="px-3.5 py-2.5 rounded-lg text-xs transition-all cursor-pointer"
+            disabled={isDeleting}
+            className="px-3.5 py-2.5 rounded-lg text-xs transition-all cursor-pointer disabled:cursor-not-allowed flex items-center justify-center"
             style={{
               background: 'rgba(255, 77, 79, 0.1)',
               color: '#ff6b6b',
+              opacity: isDeleting ? 0.6 : 1,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 77, 79, 0.15)';
-              e.currentTarget.style.color = '#ff8585';
+              if (!isDeleting) {
+                e.currentTarget.style.background = 'rgba(255, 77, 79, 0.15)';
+                e.currentTarget.style.color = '#ff8585';
+              }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 77, 79, 0.1)';
-              e.currentTarget.style.color = '#ff6b6b';
+              if (!isDeleting) {
+                e.currentTarget.style.background = 'rgba(255, 77, 79, 0.1)';
+                e.currentTarget.style.color = '#ff6b6b';
+              }
             }}
           >
-            <Trash2 className="w-4 h-4" strokeWidth={2} />
+            {isDeleting ? <Spinner size={14} /> : <Trash2 className="w-4 h-4" strokeWidth={2} />}
           </button>
         </div>
       </div>

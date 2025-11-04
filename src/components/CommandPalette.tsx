@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useTaskContext } from '@/contexts/TaskContext';
 import { CommandActionItem } from '@/lib/types';
 import CommandPaletteLayout from './CommandPaletteLayout';
 import CommandPaletteMain, { type CommandPaletteMainRef } from './CommandPaletteMain';
 import CreateTaskForm from './CreateTaskForm';
 import TaskDetailView from './TaskDetailView';
+import { toast } from 'sonner';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -18,6 +19,9 @@ export default function CommandPalette({ isOpen, setIsOpen }: CommandPaletteProp
   const [searchQuery, setSearchQuery] = useState('');
   const [prefilledTitle, setPrefilledTitle] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
   const { tasks, addTask, deleteTask, runTask } = useTaskContext();
   const mainRef = useRef<CommandPaletteMainRef>(null);
 
@@ -34,12 +38,6 @@ export default function CommandPalette({ isOpen, setIsOpen }: CommandPaletteProp
     setCurrentPage('view');
   };
 
-  const handleCreateWithTitle = (title: string) => {
-    setPrefilledTitle(title);
-    setCurrentPage('create');
-    setSearchQuery('');
-  };
-
   const handleClose = () => {
     setIsOpen(false);
     setTimeout(() => {
@@ -50,7 +48,7 @@ export default function CommandPalette({ isOpen, setIsOpen }: CommandPaletteProp
     }, 200);
   };
 
-  const handleCreateTask = (taskData: {
+  const handleCreateTask = useCallback(async (taskData: {
     title: string;
     description: string;
     triggerType: 'manual' | 'automatic';
@@ -58,9 +56,28 @@ export default function CommandPalette({ isOpen, setIsOpen }: CommandPaletteProp
     files: Array<{ name: string; size: number }>;
     apps: string[];
   }) => {
-    addTask(taskData);
-    handleClose();
-  };
+    setIsCreating(true);
+    try {
+      await addTask(taskData);
+      toast.success('Task created successfully', {
+        description: taskData.title,
+      });
+      setCurrentPage('main');
+      setSearchQuery('');
+      setPrefilledTitle('');
+      setSelectedTaskId(null);
+      setTimeout(() => {
+        mainRef.current?.focusInput();
+      }, 100);
+    } catch (error) {
+      console.error('Failed to create task:', error);
+      toast.error('Failed to create task', {
+        description: error instanceof Error ? error.message : 'An error occurred',
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  }, [addTask]);
 
   const handleBackToMain = () => {
     setCurrentPage('main');
@@ -69,19 +86,63 @@ export default function CommandPalette({ isOpen, setIsOpen }: CommandPaletteProp
     mainRef.current?.focusInput();
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    deleteTask(taskId);
-    handleBackToMain();
-  };
+  const handleDeleteTask = useCallback(async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    setIsDeleting(true);
+    try {
+      await deleteTask(taskId);
+      toast.success('Task deleted', {
+        description: task?.title || 'Task removed successfully',
+      });
+      setCurrentPage('main');
+      setPrefilledTitle('');
+      setSelectedTaskId(null);
+      mainRef.current?.focusInput();
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+      toast.error('Failed to delete task', {
+        description: error instanceof Error ? error.message : 'An error occurred',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [deleteTask, tasks]);
 
-  const handleRunTask = (taskId: string) => {
-    runTask(taskId);
-    console.log('Task run:', taskId);
-  };
+  const handleRunTask = useCallback(async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    setIsRunning(true);
+    try {
+      await runTask(taskId);
+      toast.success('Task completed successfully', {
+        description: task?.title || 'Task executed',
+      });
+    } catch (error) {
+      console.error('Failed to run task:', error);
+      toast.error('Task execution failed', {
+        description: error instanceof Error ? error.message : 'An error occurred',
+      });
+    } finally {
+      setIsRunning(false);
+    }
+  }, [runTask, tasks]);
 
-  const handleDeleteFromMain = (taskId: string) => {
-    deleteTask(taskId);
-  };
+  const handleDeleteFromMain = useCallback(async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    setIsDeleting(true);
+    try {
+      await deleteTask(taskId);
+      toast.success('Task deleted', {
+        description: task?.title || 'Task removed successfully',
+      });
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+      toast.error('Failed to delete task', {
+        description: error instanceof Error ? error.message : 'An error occurred',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [deleteTask, tasks]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -94,7 +155,9 @@ export default function CommandPalette({ isOpen, setIsOpen }: CommandPaletteProp
           setCurrentPage('main');
           setPrefilledTitle('');
           setSelectedTaskId(null);
-          mainRef.current?.focusInput();
+          setTimeout(() => {
+            mainRef.current?.focusInput();
+          }, 100);
         } else {
           setIsOpen(false);
           setTimeout(() => {
@@ -121,7 +184,6 @@ export default function CommandPalette({ isOpen, setIsOpen }: CommandPaletteProp
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           onAction={handleAction}
-          onCreateWithTitle={handleCreateWithTitle}
           onTaskSelect={handleTaskSelect}
           onRunTask={handleRunTask}
           onDeleteTask={handleDeleteFromMain}
@@ -132,6 +194,7 @@ export default function CommandPalette({ isOpen, setIsOpen }: CommandPaletteProp
           onBack={handleBackToMain}
           onSubmit={handleCreateTask}
           prefilledTitle={prefilledTitle}
+          isLoading={isCreating}
         />
       ) : selectedTask ? (
         <TaskDetailView
@@ -139,6 +202,8 @@ export default function CommandPalette({ isOpen, setIsOpen }: CommandPaletteProp
           onBack={handleBackToMain}
           onDelete={handleDeleteTask}
           onRun={handleRunTask}
+          isDeleting={isDeleting}
+          isRunning={isRunning}
         />
       ) : null}
     </CommandPaletteLayout>

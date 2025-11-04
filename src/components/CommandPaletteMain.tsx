@@ -6,12 +6,12 @@ import { CommandActionItem, Task } from '@/lib/types';
 import { useMemo, useRef, useImperativeHandle, forwardRef } from 'react';
 import Fuse from 'fuse.js';
 import Image from 'next/image';
+import { getAppLogo } from '@/lib/apps';
 
 interface CommandPaletteMainProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onAction: (action: CommandActionItem) => void;
-  onCreateWithTitle: (title: string) => void;
   onTaskSelect: (taskId: string) => void;
   onRunTask: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
@@ -26,7 +26,6 @@ const CommandPaletteMain = forwardRef<CommandPaletteMainRef, CommandPaletteMainP
   searchQuery, 
   setSearchQuery, 
   onAction,
-  onCreateWithTitle,
   onTaskSelect,
   tasks 
 }, ref) {
@@ -40,9 +39,20 @@ const CommandPaletteMain = forwardRef<CommandPaletteMainRef, CommandPaletteMainP
     }
   }));
 
+  const highlightMatch = (text: string, query: string) => {
+    if (!query) return text;
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    return parts.map((part) => 
+      part.toLowerCase() === query.toLowerCase() 
+        ? `<mark style="background: rgba(99, 102, 241, 0.3); color: #a5b4fc; padding: 0 2px; border-radius: 2px;">${part}</mark>` 
+        : part
+    ).join('');
+  };
+
   const fuse = useMemo(() => {
     return new Fuse(tasks, {
-      keys: ['title', 'description'],
+      keys: ['title', 'description', 'apps'],
       threshold: 0.3,
       includeScore: true,
     });
@@ -62,6 +72,7 @@ const CommandPaletteMain = forwardRef<CommandPaletteMainRef, CommandPaletteMainP
         boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.06)'
       }}
       shouldFilter={false}
+      defaultValue={searchQuery ? filteredTasks[0]?.id : undefined}
     >
       <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/6 relative">
         <Search className="w-4 h-4 shrink-0" style={{ color: '#999' }} strokeWidth={2} />
@@ -103,51 +114,19 @@ const CommandPaletteMain = forwardRef<CommandPaletteMainRef, CommandPaletteMainP
                 ↵
               </kbd>
             </Command.Item>
-
-            <Command.Item
-              onSelect={() => console.log('Quick actions')}
-              className="group flex items-center justify-between px-3 py-2.5 mb-1 rounded-lg cursor-pointer transition-all data-[selected=true]:bg-white/6"
-              style={{ boxShadow: 'none' }}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ 
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)'
-                }}>
-                  <Zap className="w-4 h-4" style={{ color: '#999' }} strokeWidth={2} />
-                </div>
-                <div>
-                  <div className="text-sm" style={{ color: '#e0e0e0' }}>Quick actions</div>
-                  <div className="text-xs" style={{ color: '#888' }}>Run saved shortcuts</div>
-                </div>
-              </div>
-              <kbd className="opacity-0 group-data-[selected=true]:opacity-100 px-2 py-1 bg-white/5 border border-white/10 rounded text-xs font-mono transition-opacity" style={{ color: '#888' }}>
-                ↵
-              </kbd>
-            </Command.Item>
           </Command.Group>
         )}
 
         <Command.Group className={!searchQuery ? 'mt-2 pt-2 border-t border-white/5' : ''}>
           {(searchQuery || tasks.length > 0) && (
             <div className="text-xs font-mono uppercase tracking-wider mb-2 px-3" style={{ color: '#666' }}>
-              {searchQuery ? 'Search Results' : `Recent Tasks (${tasks.length})`}
+              {searchQuery ? 'Search Results' : `Recent Tasks (${filteredTasks.length})`}
             </div>
           )}
           
           {filteredTasks.length === 0 && searchQuery ? (
-            <div className="flex flex-col items-center gap-4 py-12">
-              <div className="text-sm" style={{ color: '#666' }}>No matching tasks found</div>
-              <button
-                onClick={() => onCreateWithTitle(searchQuery)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg cursor-pointer transition-colors hover:bg-white/8"
-                style={{ background: 'rgba(255, 138, 0, 0.08)', border: '1px solid rgba(255, 138, 0, 0.15)' }}
-              >
-                <svg className="w-4 h-4" style={{ color: '#cc7000' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                  <path d="M12 5v14m-7-7h14" strokeLinecap="round"/>
-                </svg>
-                <span className="text-sm" style={{ color: '#ddd' }}>Create &ldquo;{searchQuery}&rdquo;</span>
-              </button>
+            <div className="px-4 py-8 text-center text-xs" style={{ color: '#666' }}>
+              No matching tasks found
             </div>
           ) : filteredTasks.length === 0 ? (
             <div className="px-4 py-4 text-center text-xs" style={{ color: '#666' }}>
@@ -158,24 +137,15 @@ const CommandPaletteMain = forwardRef<CommandPaletteMainRef, CommandPaletteMainP
               // Determine icon based on connected apps or trigger type
               let taskIcon;
               if (task.apps && task.apps.length > 0) {
-                const appLogos: { [key: string]: string } = {
-                  gmail: '/logos/gmail-svgrepo-com.svg',
-                  slack: '/logos/slack-svgrepo-com.svg',
-                  notion: '/logos/notion-svgrepo-com.svg',
-                  trello: '/logos/trello-svgrepo-com.svg',
-                  github: '/logos/github-svgrepo-com.svg',
-                  drive: '/logos/google-drive-svgrepo-com.svg',
-                  calendar: '/logos/g-calendar-svgrepo-com.svg',
-                  sheets: '/logos/sheets-sheet-svgrepo-com.svg'
-                };
                 const primaryApp = task.apps[0];
+                const logo = getAppLogo(primaryApp);
                 taskIcon = (
                   <div className="w-7 h-7 rounded-md flex items-center justify-center p-[3px]" style={{
                     background: '#ffffff',
                     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)'
                   }}>
                     <Image 
-                      src={appLogos[primaryApp]} 
+                      src={logo} 
                       unoptimized 
                       alt={primaryApp} 
                       width={18} 
@@ -209,11 +179,17 @@ const CommandPaletteMain = forwardRef<CommandPaletteMainRef, CommandPaletteMainP
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   {taskIcon}
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm truncate mb-0.5" style={{ color: '#e0e0e0' }}>{task.title}</div>
+                    <div 
+                      className="text-sm truncate mb-0.5" 
+                      style={{ color: '#e0e0e0' }}
+                      dangerouslySetInnerHTML={{ __html: highlightMatch(task.title, searchQuery) }}
+                    />
                     {task.description && (
-                      <div className="text-xs truncate" style={{ color: '#888' }}>
-                        {task.description}
-                      </div>
+                      <div 
+                        className="text-xs truncate" 
+                        style={{ color: '#888' }}
+                        dangerouslySetInnerHTML={{ __html: highlightMatch(task.description, searchQuery) }}
+                      />
                     )}
                   </div>
                 </div>

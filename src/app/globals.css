@@ -48,3 +48,192 @@ body {
   border: 3px solid #111;
   background: rgba(255, 255, 255, 0.12);
 }
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+/* Toast Notifications */
+.toast-container {
+  top: 24px !important;
+  right: 24px !important;
+}
+
+.toast-custom {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: linear-gradient(135deg, rgba(18, 18, 18, 0.98) 0%, rgba(12, 12, 12, 0.98) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  padding: 16px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 
+    0 0 0 1px rgba(0, 0, 0, 0.8),
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 0 120px rgba(255, 255, 255, 0.02);
+  min-width: 340px;
+  max-width: 420px;
+  animation: toast-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast-custom:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 0 0 1px rgba(0, 0, 0, 0.8),
+    0 24px 70px rgba(0, 0, 0, 0.6),
+    0 10px 28px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 120px rgba(255, 255, 255, 0.03);
+}
+
+.toast-custom[data-removed="true"] {
+  animation: toast-slide-out 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(50%) scale(0.96);
+  }
+}
+
+.toast-custom > svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.toast-title {
+  color: #f0f0f0;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-geist-sans);
+  letter-spacing: -0.01em;
+  line-height: 1.45;
+}
+
+.toast-description {
+  color: #999;
+  font-size: 13px;
+  font-weight: 400;
+  font-family: var(--font-geist-sans);
+  margin-top: 4px;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+}
+
+.toast-success {
+  background: linear-gradient(135deg, rgba(16, 24, 18, 0.98) 0%, rgba(10, 18, 12, 0.98) 100%);
+  border-color: rgba(34, 197, 94, 0.12);
+  box-shadow: 
+    0 0 0 1px rgba(0, 0, 0, 0.8),
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(34, 197, 94, 0.08),
+    inset 0 1px 0 rgba(34, 197, 94, 0.08),
+    inset 0 0 120px rgba(34, 197, 94, 0.03);
+}
+
+.toast-success > svg {
+  color: #22c55e;
+}
+
+.toast-success:hover {
+  border-color: rgba(34, 197, 94, 0.18);
+}
+
+.toast-error {
+  background: linear-gradient(135deg, rgba(24, 16, 18, 0.98) 0%, rgba(18, 10, 12, 0.98) 100%);
+  border-color: rgba(239, 68, 68, 0.12);
+  box-shadow: 
+    0 0 0 1px rgba(0, 0, 0, 0.8),
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(239, 68, 68, 0.08),
+    inset 0 1px 0 rgba(239, 68, 68, 0.08),
+    inset 0 0 120px rgba(239, 68, 68, 0.03);
+}
+
+.toast-error > svg {
+  color: #ef4444;
+}
+
+.toast-error:hover {
+  border-color: rgba(239, 68, 68, 0.18);
+}
+
+.toast-warning {
+  background: linear-gradient(135deg, rgba(24, 22, 16, 0.98) 0%, rgba(18, 16, 10, 0.98) 100%);
+  border-color: rgba(251, 191, 36, 0.12);
+  box-shadow: 
+    0 0 0 1px rgba(0, 0, 0, 0.8),
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(251, 191, 36, 0.08),
+    inset 0 1px 0 rgba(251, 191, 36, 0.08),
+    inset 0 0 120px rgba(251, 191, 36, 0.03);
+}
+
+.toast-warning > svg {
+  color: #fbbf24;
+}
+
+.toast-warning:hover {
+  border-color: rgba(251, 191, 36, 0.18);
+}
+
+.toast-info {
+  background: linear-gradient(135deg, rgba(16, 20, 24, 0.98) 0%, rgba(10, 14, 18, 0.98) 100%);
+  border-color: rgba(59, 130, 246, 0.12);
+  box-shadow: 
+    0 0 0 1px rgba(0, 0, 0, 0.8),
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(59, 130, 246, 0.08),
+    inset 0 1px 0 rgba(59, 130, 246, 0.08),
+    inset 0 0 120px rgba(59, 130, 246, 0.03);
+}
+
+.toast-info > svg {
+  color: #3b82f6;
+}
+
+.toast-info:hover {
+  border-color: rgba(59, 130, 246, 0.18);
+}
+

@@ -3,10 +3,11 @@
 import { Command } from 'cmdk';
 import { Search, Plus, Zap } from 'lucide-react';
 import { CommandActionItem, Task } from '@/lib/types';
-import { useMemo, useRef, useImperativeHandle, forwardRef } from 'react';
+import { useMemo, useRef, useImperativeHandle, forwardRef, useState, useEffect } from 'react';
 import Fuse from 'fuse.js';
 import Image from 'next/image';
 import { getAppLogo } from '@/lib/apps';
+import Spinner from '@/components/Spinner';
 
 interface CommandPaletteMainProps {
   searchQuery: string;
@@ -30,6 +31,8 @@ const CommandPaletteMain = forwardRef<CommandPaletteMainRef, CommandPaletteMainP
   tasks 
 }, ref) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
 
   useImperativeHandle(ref, () => ({
     focusInput: () => {
@@ -38,6 +41,23 @@ const CommandPaletteMain = forwardRef<CommandPaletteMainRef, CommandPaletteMainP
       }, 100);
     }
   }));
+
+  // Debounce search with loading state
+  useEffect(() => {
+    if (!searchQuery) {
+      setDebouncedQuery('');
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+      setIsSearching(false);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const highlightMatch = (text: string, query: string) => {
     if (!query) return text;
@@ -59,10 +79,10 @@ const CommandPaletteMain = forwardRef<CommandPaletteMainRef, CommandPaletteMainP
   }, [tasks]);
 
   const filteredTasks = useMemo(() => {
-    if (!searchQuery) return tasks.slice(0, 5);
-    const results = fuse.search(searchQuery);
+    if (!debouncedQuery) return tasks.slice(0, 5);
+    const results = fuse.search(debouncedQuery);
     return results.map(result => result.item).slice(0, 5);
-  }, [searchQuery, fuse, tasks]);
+  }, [debouncedQuery, fuse, tasks]);
 
   return (
     <Command
@@ -89,6 +109,25 @@ const CommandPaletteMain = forwardRef<CommandPaletteMainRef, CommandPaletteMainP
           ESC
         </kbd>
       </div>
+      
+      {/* Loading bar */}
+      {isSearching && (
+        <div className="h-0.5 w-full bg-white/5 overflow-hidden">
+          <div 
+            className="h-full w-1/3"
+            style={{
+              background: 'linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.6), transparent)',
+              animation: 'loading-slide 1s ease-in-out infinite'
+            }}
+          />
+        </div>
+      )}
+      <style jsx>{`
+        @keyframes loading-slide {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(400%); }
+        }
+      `}</style>
 
       <Command.List className="max-h-[400px] overflow-y-auto p-2">
         {!searchQuery && (
@@ -124,9 +163,26 @@ const CommandPaletteMain = forwardRef<CommandPaletteMainRef, CommandPaletteMainP
             </div>
           )}
           
-          {filteredTasks.length === 0 && searchQuery ? (
-            <div className="px-4 py-8 text-center text-xs" style={{ color: '#666' }}>
-              No matching tasks found
+          {isSearching ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <Spinner size={20} />
+              <div className="text-xs" style={{ color: '#666' }}>
+                Searching...
+              </div>
+            </div>
+          ) : filteredTasks.length === 0 && searchQuery ? (
+            <div className="flex flex-col items-center py-8 gap-4">
+              <div className="text-xs" style={{ color: '#666' }}>
+                No matching tasks found
+              </div>
+              <button
+                onClick={() => onAction({ id: 'new-task', label: 'Create New Task', icon: 'plus', description: 'Add a new task to your list' })}
+                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/8 rounded-lg transition-all cursor-pointer"
+                style={{ border: '1px solid rgba(255, 255, 255, 0.08)' }}
+              >
+                <Plus className="w-3.5 h-3.5" style={{ color: '#e0e0e0' }} strokeWidth={2.5} />
+                <span className="text-sm" style={{ color: '#e0e0e0' }}>Create new task</span>
+              </button>
             </div>
           ) : filteredTasks.length === 0 ? (
             <div className="px-4 py-4 text-center text-xs" style={{ color: '#666' }}>
